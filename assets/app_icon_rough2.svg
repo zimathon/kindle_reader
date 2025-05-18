@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="512" height="512" rx="100" fill="#F5F5F5"/>
+  <!-- 電球本体 -->
+  <ellipse cx="256" cy="210" rx="110" ry="130" fill="#FFFDE7" stroke="#FFD600" stroke-width="10"/>
+  <!-- フィラメントとしてのK -->
+  <text x="196" y="250" font-family="Arial, Helvetica, sans-serif" font-size="100" font-weight="bold" fill="#FFD600" stroke="#FFA000" stroke-width="2">K</text>
+  <!-- 電球の台座 -->
+  <rect x="196" y="320" width="120" height="40" rx="16" fill="#B0BEC5" stroke="#78909C" stroke-width="6"/>
+  <rect x="212" y="360" width="88" height="20" rx="8" fill="#90A4AE"/>
+  <!-- 本のページ（下部） -->
+  <rect x="156" y="380" width="200" height="30" rx="10" fill="#FFF" stroke="#BDBDBD" stroke-width="3"/>
+  <!-- 光のエフェクト -->
+  <g>
+    <line x1="256" y1="60" x2="256" y2="20" stroke="#FFD600" stroke-width="8" stroke-linecap="round"/>
+    <line x1="326" y1="80" x2="356" y2="50" stroke="#FFD600" stroke-width="6" stroke-linecap="round"/>
+    <line x1="186" y1="80" x2="156" y2="50" stroke="#FFD600" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg> 

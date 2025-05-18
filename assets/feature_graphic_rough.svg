@@ -1,0 +1,31 @@
+<svg width="1024" height="500" viewBox="0 0 1024 500" fill="none"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDE7"/>
+      <stop offset="1" stop-color="#FFECB3"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="500" fill="url(#bg)"/>
+  <g transform="translate(220,110) scale(0.9)">
+    <rect x="0" y="0" width="220" height="220" rx="40" fill="#FF9900" stroke="#333" stroke-width="8"/>
+    <rect x="30" y="30" width="160" height="160" rx="24" fill="#FFF" stroke="#333" stroke-width="4"/>
+    <text x="60" y="130" font-family="Arial, Helvetica, sans-serif" font-size="80" font-weight="bold" fill="#1976D2">K</text>
+    <g>
+      <ellipse cx="110" cy="60" rx="22" ry="16" fill="#FFFDE7" stroke="#FFD600" stroke-width="4"/>
+      <rect x="94" y="60" width="32" height="40" rx="12" fill="#FFD600"/>
+      <ellipse cx="110" cy="100" rx="12" ry="8" fill="#FFD600"/>
+    </g>
+  </g>
+  <g>
+    <text x="540" y="180" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="bold" fill="#1976D2">
+      クラウド書庫 for Readers
+    </text>
+    <text x="540" y="240" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" fill="#FFA000">
+      ジャンル自動付与・カバー画像取得・検索・管理
+    </text>
+    <text x="540" y="285" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#333">
+      蔵書をもっと便利に、もっと楽しく。
+    </text>
+  </g>
+</svg>

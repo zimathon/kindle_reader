@@ -2,6 +2,7 @@ import 'dart:convert'; // JSONエンコード/デコード用
 
 // import 'package:flutter_gemini/flutter_gemini.dart'; // 不要になるため削除
 import 'package:google_generative_ai/google_generative_ai.dart'; // google_generative_ai をインポート
+import 'package:kindle_reader/utils/logger.dart';
 
 class LlmService {
   final String? _apiKey;
@@ -12,8 +13,7 @@ class LlmService {
       _model = GenerativeModel(model: 'models/gemini-2.0-flash', apiKey: _apiKey);
       // _listAvailableModels(); // モデルリスト取得は一旦コメントアウト
     } else {
-      // ignore: avoid_print
-      print('LlmService: APIキーが設定されていません。');
+      printWithTimestamp('LlmService: APIキーが設定されていません。');
       // APIキーがない場合、_model は null のままになります。
       // 呼び出し側で _model が null でないことを確認する必要があります。
     }
@@ -79,20 +79,20 @@ class LlmService {
   "cover_image_keywords": "(ここにカバー画像を生成するためのキーワードや簡単な説明、3つ程度)"
 }''';
     // ignore: avoid_print
-    print('LlmService: 送信するプロンプト:\\n$promptString');
+    printWithTimestamp('LlmService: 送信するプロンプト:\n$promptString');
 
     try {
       final content = [Content.text(promptString)];
       // ignore: avoid_print
-      print('LlmService: model.generateContent() を呼び出します。');
+      printWithTimestamp('LlmService: model.generateContent() を呼び出します。');
       final response = await _model!.generateContent(content);
       // ignore: avoid_print
-      print('LlmService: APIからレスポンスを受け取りました。');
+      printWithTimestamp('LlmService: APIからレスポンスを受け取りました。');
 
       if (response.text != null) {
         final String rawJsonText = response.text!;
         // ignore: avoid_print
-        print('LlmService: レスポンス テキスト: $rawJsonText');
+        printWithTimestamp('LlmService: レスポンス テキスト: $rawJsonText');
         final cleanedJsonText = rawJsonText.replaceAll("```json", "").replaceAll("```", "").trim();
         
         try {
@@ -103,8 +103,8 @@ class LlmService {
           };
         } catch (e) {
           // ignore: avoid_print
-          print('JSONパースエラー: $e');
-          print('パースしようとした文字列: $cleanedJsonText');
+          printWithTimestamp('JSONパースエラー: $e');
+          printWithTimestamp('パースしようとした文字列: $cleanedJsonText');
           return {
             'genre': 'パース失敗',
             'keywords': 'パース失敗',
@@ -112,7 +112,7 @@ class LlmService {
         }
       } else {
         // ignore: avoid_print
-        print('LLM APIエラー: レスポンスのtextがnullです。response: ${response.toString()}');
+        printWithTimestamp('LLM APIエラー: レスポンスのtextがnullです。response: ${response.toString()}');
         throw Exception('LLMからの情報取得に失敗しました。レスポンスが空です。');
       }
     // google_generative_ai パッケージがスローする可能性のある例外をキャッチ
@@ -120,16 +120,71 @@ class LlmService {
     // 例として GenerativeAIException や HttpException が考えられます。
     } on GenerativeAIException catch (e, s) { 
       // ignore: avoid_print
-      print('google_generative_ai APIエラー (GenerativeAIException): $e');
+      printWithTimestamp('google_generative_ai APIエラー (GenerativeAIException): $e');
       // ignore: avoid_print
-      print('スタックトレース: $s');
+      printWithTimestamp('スタックトレース: $s');
       throw Exception('LLM API呼び出し中に GenerativeAIException が発生しました: $e');
     } catch (e, s) {
       // ignore: avoid_print
-      print('LLM APIエラー (その他の例外): $e');
+      printWithTimestamp('LLM APIエラー (その他の例外): $e');
       // ignore: avoid_print
-      print('スタックトレース: $s');
+      printWithTimestamp('スタックトレース: $s');
       throw Exception('LLM API呼び出し中に予期せぬエラーが発生しました: $e');
     }
+  }
+
+  Future<String> generateImageSearchQuery(String title, String authors) async {
+    // LLMへの問い合わせ処理を削除し、固定のクエリ形式を使用する
+    final searchQuery = '"$title" book cover';
+    printWithTimestamp('LlmService: 生成された画像検索クエリ (固定): $searchQuery');
+    return searchQuery;
+    /*  // 元のLLM呼び出し部分はコメントアウトまたは削除
+    if (_model == null) {
+      // ignore: avoid_print
+      printWithTimestamp('LlmService: モデルが初期化されていません（APIキーがありません）。');
+      throw Exception('LLMサービスが初期化されていません。APIキーを確認してください。');
+    }
+
+    // 著者名はプロンプト内では参考情報として残すが、基本クエリからは一旦外す
+    final authorPromptPart = authors.isNotEmpty ? "著者名「$authors」も参考にしてください。" : "";
+    // 基本の検索クエリを書籍タイトルのみにする
+    final baseQuery = '"$title" book cover'; 
+    
+    final promptString = '''書籍タイトル「$title」について、オンラインでカバー画像や関連画像を検索するための、効果的な英語の検索クエリを生成してください。
+$authorPromptPart
+基本の検索クエリの形式は「$baseQuery」とします。
+この基本クエリに、必要に応じて関連性の高いキーワードを追加したり、語順を調整するなどして、最も公式で高品質なカバー画像が見つかりやすいと思われる最終的な英語の検索クエリを1つだけ、文字列として返してください。
+余計な説明や前置き、引用符は不要です。最終的なクエリ文字列のみを返してください。''';
+    // ignore: avoid_print
+    printWithTimestamp('LlmService: 画像検索クエリ生成プロンプト:\n$promptString');
+
+    try {
+      final content = [Content.text(promptString)];
+      final response = await _model!.generateContent(content);
+
+      if (response.text != null && response.text!.isNotEmpty) {
+        final String searchQueryResponse = response.text!.trim();
+        // ignore: avoid_print
+        printWithTimestamp('LlmService: 生成された画像検索クエリ: $searchQueryResponse');
+        return searchQueryResponse;
+      } else {
+        // ignore: avoid_print
+        printWithTimestamp('LLM APIエラー: 画像検索クエリの生成に失敗しました。レスポンスが空かnullです。');
+        throw Exception('LLMからの画像検索クエリ生成に失敗しました。');
+      }
+    } on GenerativeAIException catch (e, s) {
+      // ignore: avoid_print
+      printWithTimestamp('google_generative_ai APIエラー (GenerativeAIException) - 画像検索クエリ生成時: $e');
+      // ignore: avoid_print
+      printWithTimestamp('スタックトレース: $s');
+      throw Exception('LLM API (画像検索クエリ生成) で GenerativeAIException が発生しました: $e');
+    } catch (e, s) {
+      // ignore: avoid_print
+      printWithTimestamp('LLM APIエラー (その他の例外) - 画像検索クエリ生成時: $e');
+      // ignore: avoid_print
+      printWithTimestamp('スタックトレース: $s');
+      throw Exception('LLM API (画像検索クエリ生成) で予期せぬエラーが発生しました: $e');
+    }
+    */
   }
 } 

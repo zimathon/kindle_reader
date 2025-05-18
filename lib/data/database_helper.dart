@@ -1,3 +1,4 @@
+import 'package:kindle_reader/utils/logger.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -78,7 +79,7 @@ class DatabaseHelper {
   }
 
   // 一括挿入 (書籍名で重複チェックを行う)
-  Future<void> batchInsertBooks(List<Book> books) async {
+  Future<int> batchInsertBooks(List<Book> books) async {
     Database db = await instance.database;
     Batch batch = db.batch();
     int newBooksCount = 0;
@@ -106,7 +107,8 @@ class DatabaseHelper {
     }
     await batch.commit(noResult: true);
     // ignore: avoid_print
-    print('$newBooksCount 件の新しい書籍をデータベースに保存しました。$skippedBooksCount 件の書籍は既に存在したためスキップしました。');
+    printWithTimestamp('$newBooksCount 件の新しい書籍をデータベースに保存しました。$skippedBooksCount 件の書籍は既に存在したためスキップしました。');
+    return newBooksCount;
   }
 
   // 書籍のLLM情報を更新
@@ -130,11 +132,83 @@ class DatabaseHelper {
   // Future<int> updateBook(Book book) async { ... }
   // Future<int> deleteBook(int id) async { ... }
   
+  // 書籍のステータスを更新
+  Future<int> updateBookStatus(int bookId, String newStatus) async {
+    Database db = await instance.database;
+    return await db.update(
+      tableBooks,
+      {columnStatus: newStatus},
+      where: '$columnId = ?',
+      whereArgs: [bookId],
+    );
+  }
+
+  // 書籍のカバー画像パスを更新
+  Future<int> updateBookCoverImage(int bookId, String imagePath) async {
+    Database db = await instance.database;
+    return await db.update(
+      tableBooks,
+      {columnCoverImagePath: imagePath},
+      where: '$columnId = ?',
+      whereArgs: [bookId],
+    );
+  }
+
   // 全書籍削除 (デバッグ用など)
   Future<void> deleteAllBooks() async {
-    Database db = await instance.database;
+    final db = await database;
     await db.delete(tableBooks);
     // ignore: avoid_print
-    print('データベース内の全書籍を削除しました。');
+    printWithTimestamp('データベース内の全書籍を削除しました。');
+  }
+
+  // ユニークなジャンルリストを取得
+  Future<List<String>> getUniqueGenres() async {
+    Database db = await instance.database;
+    // まず、NULLや空文字でないジャンルを持つ全ての書籍のジャンル文字列を取得
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableBooks,
+      columns: [columnGenre],
+      where: '$columnGenre IS NOT NULL AND $columnGenre != ?',
+      whereArgs: [''],
+    );
+
+    if (maps.isEmpty) {
+      return [];
+    }
+
+    // 全てのジャンル文字列を収集し、句読点で分割し、フラットなリストにする
+    final Set<String> uniqueGenresSet = {}; // 重複排除のためにSetを使用
+
+    for (final map in maps) {
+      final String? genreString = map[columnGenre] as String?;
+      if (genreString != null && genreString.trim().isNotEmpty) {
+        genreString
+            .split(RegExp(r'[、,]')) // 読点またはカンマで分割
+            .map((g) => g.trim())    // 各要素をトリム
+            .where((g) => g.isNotEmpty) // 空の要素を除外
+            .forEach((g) => uniqueGenresSet.add(g)); // Setに追加して重複を自動的に排除
+      }
+    }
+    
+    // Setをリストに変換し、ソートして返す
+    final List<String> sortedGenres = uniqueGenresSet.toList();
+    sortedGenres.sort(); // アルファベット順/辞書順にソート
+
+    return sortedGenres;
+  }
+
+  // ユニークなステータスリストを取得
+  Future<List<String>> getUniqueStatuses() async {
+    Database db = await instance.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableBooks,
+      distinct: true,
+      columns: [columnStatus],
+      where: '$columnStatus IS NOT NULL AND $columnStatus != ?',
+      whereArgs: [''], // 空文字のステータスを除外
+      orderBy: columnStatus,
+    );
+    return List.generate(maps.length, (i) => maps[i][columnStatus] as String);
   }
 } 

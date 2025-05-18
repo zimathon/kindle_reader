@@ -1,5 +1,5 @@
 import 'package:csv/csv.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:kindle_reader/utils/logger.dart';
 
 // 仮の書籍データモデル (design.md に合わせて後で詳細化)
 class Book {
@@ -87,76 +87,54 @@ class Book {
 }
 
 class CsvParser {
-  Future<List<Book>> parseBooksFromCsvAsset(String assetPath) async {
+  List<Book> _parseToList(List<List<dynamic>> csvData) {
     final List<Book> books = [];
-    try {
-      final rawCsvData = await rootBundle.loadString(assetPath);
-      // CSVパーサーの設定: Windows/Mac/Linuxの改行コードの違いに対応しやすくするため eol を指定
-      final List<List<dynamic>> listData =
-          const CsvToListConverter(eol: '\n', shouldParseNumbers: false)
-              .convert(rawCsvData);
+    if (csvData.isEmpty) {
+      printWithTimestamp('CSVデータが空です。');
+      return books;
+    }
 
-      if (listData.isEmpty) {
-        // ignore: avoid_print
-        print('CSVデータが空です。');
-        return books;
+    final headers = csvData.first.map((e) => e.toString().toLowerCase().trim()).toList();
+    if (csvData.length <= 1) {
+      printWithTimestamp('CSVデータにヘッダー行以降のデータがありません。');
+      return books;
+    }
+    for (var i = 1; i < csvData.length; i++) {
+      final rowData = csvData[i];
+      if (rowData.length < headers.length) {
+        printWithTimestamp('行 ${i + 1}: カラム数が不足しています。スキップします。データ: $rowData');
+        continue;
       }
-
-      // ヘッダー行をスキップするため、データは1行目から処理 (ユーザー指示)
-      // CSVファイルにヘッダー行しかデータがない場合も考慮
-      if (listData.length < 2) {
-        // ignore: avoid_print
-        print('CSVデータにヘッダー行以降のデータがありません。');
-        return books;
+      final Map<String, String> row = {};
+      for (var j = 0; j < headers.length; j++) {
+        row[headers[j]] = rowData[j]?.toString().trim() ?? '';
       }
-
-      // ヘッダー行のログ出力 (デバッグ用)
-      // final headerRow = listData.first;
-      // print('CSV Header: $headerRow');
-
-      for (var i = 1; i < listData.length; i++) {
-        final row = listData[i];
-
-        // カラム数のチェック (必須フィールドは4つ)
-        if (row.length < 4) {
-          // ignore: avoid_print
-          print('行 ${i + 1}: カラム数が不足しています（期待値4以上、実際は${row.length}）。スキップします。データ: $row');
-          continue;
-        }
-
-        // 各フィールドの値を安全に取得し、前後の空白を除去
-        // rowの各要素がnullの可能性も考慮し、?? '' で空文字をデフォルト値とする
-        final String title = row[0]?.toString().trim() ?? '';
-        final String authors = row[1]?.toString().trim() ?? '';
-        final String purchaseDate = row[2]?.toString().trim() ?? '';
-        final String status = row[3]?.toString().trim() ?? '';
-
-        // 必須フィールドの空チェック
-        if (title.isEmpty ||
-            authors.isEmpty ||
-            purchaseDate.isEmpty ||
-            status.isEmpty) {
-          // ignore: avoid_print
-          print('行 ${i + 1}: 必須フィールドが空です。スキップします。データ: $row');
-          continue;
-        }
-
-        books.add(Book(
-          title: title,
-          authors: authors,
-          purchaseDate: purchaseDate, // "YYYY年M月D日" 形式のまま
-          status: status,
-          id: null, // CSVからはIDを読み込まない
-          genre: null, // LLMで後から付与
-          keywords: null, // LLMで後から付与
-          coverImagePath: null, // LLMで後から付与 (オプション)
-        ));
+      final String title = row['title'] ?? '';
+      final String authors = row['authors'] ?? '';
+      final String purchaseDate = row['date'] ?? '';
+      final String status = row['status'] ?? '';
+      if (title.isEmpty || authors.isEmpty || purchaseDate.isEmpty || status.isEmpty) {
+        printWithTimestamp('行 ${i + 1}: 必須フィールドが空です。スキップします。データ: $row');
+        continue;
       }
-    } catch (e) {
-      // ignore: avoid_print
-      print('CSVファイルの読み込みまたはパース中にエラーが発生しました: $e');
-      // エラー発生時は空のリストを返すか、より詳細なエラー処理を行うかはアプリの要件による
+      books.add(Book(
+        id: null,
+        title: title,
+        authors: authors,
+        purchaseDate: purchaseDate,
+        status: status,
+        genre: null,
+        keywords: null,
+        coverImagePath: null,
+      ));
     }
     return books;
+  }
+
+  Future<List<Book>> parseBooksFromCsvString(String csvString) async {
+    // _parseToList は同期的だが、将来的に非同期処理が入る可能性も考慮しFutureでラップ
+    // または _parseToList を Future<List<Book>> にしてもよい
+    return _parseToList(const CsvToListConverter(eol: '\n', shouldParseNumbers: false)
+        .convert(csvString)); 
   }
 } 

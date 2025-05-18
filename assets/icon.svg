@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="100" fill="#F5F5F5"/>
+  <rect x="96" y="96" width="320" height="320" rx="40" fill="#FF9900" stroke="#333" stroke-width="8"/>
+  <rect x="136" y="136" width="240" height="240" rx="24" fill="#FFF" stroke="#333" stroke-width="4"/>
+  <text x="180" y="300" font-family="Arial, Helvetica, sans-serif" font-size="120" font-weight="bold" fill="#1976D2">K</text>
+  <g>
+    <ellipse cx="256" cy="180" rx="32" ry="24" fill="#FFFDE7" stroke="#FFD600" stroke-width="4"/>
+    <rect x="240" y="180" width="32" height="40" rx="12" fill="#FFD600"/>
+    <ellipse cx="256" cy="220" rx="12" ry="8" fill="#FFD600"/>
+  </g>
+</svg>
